@@ -72,9 +72,6 @@ iframe{
   width:15px;
   height:15px;
   border:none;
-  
-   
-  
   font-size:10px;
   cursor:pointer;
   z-index:9999;
@@ -114,19 +111,51 @@ var htmlInput = document.getElementById("html-input");
 var runButton = document.getElementById("run-html");
 var fullscreenBtn = document.getElementById("fullscreen-btn");
 
+var fullscreenTarget = iframe;
+
 function renderHTML(html) {
   htmlInput.value = '';
 
-  var doc =
-    iframe.contentDocument ||
-    iframe.contentWindow.document;
+  try {
 
-  doc.open();
-  doc.write(html);
-  doc.close();
+    var doc =
+      iframe.contentDocument ||
+      iframe.contentWindow.document;
+
+    
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+  } catch(err) {
+
+    console.log(
+      "Iframe restricted, using srcdoc fallback"
+    );
+
+     
+    iframe.srcdoc = html;
+  }
 
   panel.style.display = "none";
   fullscreenBtn.style.display = "block";
+
+  fullscreenTarget = iframe;
+
+  try {
+
+    var iframeDoc =
+      iframe.contentDocument ||
+      iframe.contentWindow.document;
+
+    if (iframeDoc && iframeDoc.documentElement) {
+      fullscreenTarget = iframeDoc.documentElement;
+    }
+
+  } catch(err) {
+
+    fullscreenTarget = document.documentElement;
+  }
 }
 
 function loadFile(file) {
@@ -171,19 +200,34 @@ runButton.addEventListener("click", () => {
 });
 
 fullscreenBtn.addEventListener("click", async () => {
+
   try {
-    if (iframe.requestFullscreen) {
-      await iframe.requestFullscreen();
-    } else if (iframe.webkitRequestFullscreen) {
-      iframe.webkitRequestFullscreen();
-    } else if (iframe.msRequestFullscreen) {
-      iframe.msRequestFullscreen();
+
+    if (fullscreenTarget.requestFullscreen) {
+      await fullscreenTarget.requestFullscreen();
+
+    } else if (fullscreenTarget.webkitRequestFullscreen) {
+      fullscreenTarget.webkitRequestFullscreen();
+
+    } else if (fullscreenTarget.msRequestFullscreen) {
+      fullscreenTarget.msRequestFullscreen();
     }
-  } catch (err) {
+
+  } catch(err) {
+
     console.error(err);
+
+     
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch(e) {
+      console.error(e);
+    }
+
   }
+
 });
 </script>
 
 </body>
-</html> 
+</html>
